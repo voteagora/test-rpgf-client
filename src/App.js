@@ -33,6 +33,8 @@ const StyledButton = styled.button`
   }
 `;
 
+const BASE_URL = "https://optimism-agora-dev.agora-dev.workers.dev/";
+
 const wagmiClient = createConfig(
   getDefaultConfig({
     appName: "Agora",
@@ -45,9 +47,12 @@ const wagmiClient = createConfig(
 
 const siweConfig = {
   getNonce: async () =>
-    fetch("api/auth/nonce").then(async (res) => {
+    fetch(BASE_URL + "api/auth/nonce").then(async (res) => {
       const result = await res.json();
       console.log(result);
+
+      // save nonce to local storage
+      localStorage.setItem("nonce", result.nonce);
 
       return result.nonce;
     }),
@@ -66,26 +71,40 @@ const siweConfig = {
 
     return message;
   },
-  verifyMessage: async ({ message, signature }) =>
-    fetch("api/auth/verify", {
+  verifyMessage: async ({ message, signature }) => {
+    // get nonce from local storage
+    const nonce = localStorage.getItem("nonce");
+
+    return fetch(BASE_URL + "api/auth/verify", {
       method: "POST",
-      withCredentials: true,
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ message, signature }),
-    }).then((res) => {
-      console.log(res);
-      return res.json();
-    }),
-  getSession: async () =>
-    fetch("api/auth/session", { withCredentials: true }).then((res) =>
-      res.json()
-    ),
-  signOut: async () =>
-    fetch("api/auth/signout", { withCredentials: true }).then((res) =>
-      res.json()
-    ),
+      body: JSON.stringify({ message, signature, nonce }),
+    }).then(async (res) => {
+      const accessToken = (await res.json()).accessToken;
+      // save session to local storage
+      localStorage.setItem("session", accessToken);
+      console.log(accessToken);
+
+      return accessToken;
+    });
+  },
+  getSession: async () => {
+    // get session from local storage
+    const session = localStorage.getItem("session");
+
+    fetch(BASE_URL + "api/auth/session", {
+      headers: { Authorization: `Bearer ${session}` },
+    }).then((res) => res.json());
+  },
+  signOut: async () => {
+    // remove session from local storage
+    localStorage.removeItem("session");
+    console.log("sign out");
+
+    return true;
+  },
 };
 
 function App() {
