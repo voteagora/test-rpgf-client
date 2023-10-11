@@ -49,9 +49,6 @@ const siweConfig = {
   getNonce: async () =>
     fetch(BASE_URL + "api/auth/nonce").then(async (res) => {
       const result = await res.json();
-      console.log(result);
-
-      // save nonce to local storage
       localStorage.setItem("nonce", result.nonce);
 
       return result.nonce;
@@ -67,14 +64,10 @@ const siweConfig = {
       statement: "Sign in to Agora Optimism",
     }).prepareMessage();
 
-    console.log("create message", message);
-
     return message;
   },
   verifyMessage: async ({ message, signature }) => {
-    // get nonce from local storage
     const nonce = localStorage.getItem("nonce");
-
     return fetch(BASE_URL + "api/auth/verify", {
       method: "POST",
       headers: {
@@ -83,26 +76,26 @@ const siweConfig = {
       body: JSON.stringify({ message, signature, nonce }),
     }).then(async (res) => {
       const accessToken = (await res.json()).accessToken;
-      // save session to local storage
-      localStorage.setItem("session", accessToken);
-      console.log(accessToken);
-
+      localStorage.setItem("accessToken", accessToken);
       return accessToken;
     });
   },
   getSession: async () => {
-    // get session from local storage
-    const session = localStorage.getItem("session");
+    const accessToken = localStorage.getItem("accessToken");
 
-    fetch(BASE_URL + "api/auth/session", {
-      headers: { Authorization: `Bearer ${session}` },
-    }).then((res) => res.json());
+    return fetch(BASE_URL + "api/auth/session", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }).then(async (res) => {
+      if (res.ok) {
+        const result = await res.json();
+        return result.session;
+      } else {
+        return null;
+      }
+    });
   },
   signOut: async () => {
-    // remove session from local storage
-    localStorage.removeItem("session");
-    console.log("sign out");
-
+    localStorage.removeItem("accessToken");
     return true;
   },
 };
