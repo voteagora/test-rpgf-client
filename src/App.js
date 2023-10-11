@@ -9,8 +9,9 @@ import {
 import styled from "styled-components";
 import { WagmiConfig, createConfig } from "wagmi";
 import { optimism } from "viem/chains";
+import { Ballot } from "./Ballot";
 
-const StyledButton = styled.button`
+export const StyledButton = styled.button`
   cursor: pointer;
   position: relative;
   display: inline-block;
@@ -118,6 +119,8 @@ function App() {
                   );
                 }}
               </ConnectKitButton.Custom>
+              <br />
+              <Ballot />
             </header>
           </div>
         </ConnectKitProvider>
