@@ -34,7 +34,7 @@ export const StyledButton = styled.button`
   }
 `;
 
-const BASE_URL = "https://optimism-agora-dev.agora-dev.workers.dev/";
+export const BASE_URL = "https://optimism-agora-dev.agora-dev.workers.dev/";
 
 const wagmiClient = createConfig(
   getDefaultConfig({
