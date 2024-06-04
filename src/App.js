@@ -10,6 +10,7 @@ import styled from "styled-components";
 import { WagmiConfig, createConfig } from "wagmi";
 import { optimism } from "viem/chains";
 import { Ballot } from "./Ballot";
+import { decodeJwt } from "jose";
 
 export const StyledButton = styled.button`
   cursor: pointer;
@@ -34,8 +35,6 @@ export const StyledButton = styled.button`
   }
 `;
 
-export const BASE_URL = "https://optimism-agora-dev.agora-dev.workers.dev/";
-
 const wagmiClient = createConfig(
   getDefaultConfig({
     appName: "Agora",
@@ -48,11 +47,11 @@ const wagmiClient = createConfig(
 
 const siweConfig = {
   getNonce: async () =>
-    fetch(BASE_URL + "api/auth/nonce").then(async (res) => {
-      const result = await res.json();
-      localStorage.setItem("nonce", result.nonce);
+    fetch("api/v1/auth/nonce").then(async (res) => {
+      const result = await res.text();
+      localStorage.setItem("nonce", result);
 
-      return result.nonce;
+      return result;
     }),
   createMessage: ({ nonce, address, chainId }) => {
     const message = new SiweMessage({
@@ -69,31 +68,36 @@ const siweConfig = {
   },
   verifyMessage: async ({ message, signature }) => {
     const nonce = localStorage.getItem("nonce");
-    return fetch(BASE_URL + "api/auth/verify", {
+    return fetch("api/v1/auth/verify", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer 937076a5-91a6-4da2-bc71-0310dbd3637f`,
       },
       body: JSON.stringify({ message, signature, nonce }),
     }).then(async (res) => {
-      const accessToken = (await res.json()).accessToken;
+      const accessToken = (await res.json()).access_token;
       localStorage.setItem("accessToken", accessToken);
       return accessToken;
     });
   },
   getSession: async () => {
-    const accessToken = localStorage.getItem("accessToken");
+    const session = localStorage.getItem("accessToken");
+    if (!session) {
+      return null;
+    }
 
-    return fetch(BASE_URL + "api/auth/session", {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    }).then(async (res) => {
-      if (res.ok) {
-        const result = await res.json();
-        return result.session;
-      } else {
-        return null;
-      }
-    });
+    console.log(session);
+    // decode JWT to get session info
+    const decoded = decodeJwt(session);
+    const siweData = decoded.siwe;
+
+    console.log(decoded);
+
+    return {
+      address: siweData.address,
+      chainId: Number(siweData.chainId),
+    };
   },
   signOut: async () => {
     localStorage.removeItem("accessToken");
