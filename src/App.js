@@ -35,6 +35,8 @@ export const StyledButton = styled.button`
   }
 `;
 
+export const BASE_URL = "https://vote.optimism.io/";
+
 const wagmiClient = createConfig(
   getDefaultConfig({
     appName: "Agora",
