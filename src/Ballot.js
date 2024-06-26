@@ -1,38 +1,31 @@
 import { useAccount, useSignMessage } from "wagmi";
-import { BASE_URL, StyledButton } from "./App";
+import { StyledButton } from "./App";
 
 export function Ballot() {
   const signer = useSignMessage();
   const { address } = useAccount();
 
-  const votes = [
-    {
-      projectId:
-        "0x62b4d6981157e612e93afd529ca87537076c55b113585bd8283fdcf484465df7",
-      amount: "4000000",
-    },
-    {
-      projectId:
-        "0x5526e506626916e2ae4c40f3ccb08a200f6b4fe72a510a9e43771164e4647990",
-      amount: "3000000",
-    },
-  ];
+  const ballot_content = {
+    allocations: [{ gas_fees: 100 }],
+    os_only: false,
+    os_multiplier: 1,
+  };
 
   return (
     <StyledButton
       onClick={async () => {
         const signature = await signer.signMessageAsync({
-          message: JSON.stringify(votes),
+          message: JSON.stringify(ballot_content),
         });
 
         console.log(signature);
 
-        fetch(BASE_URL + "api/ballot/submit", {
+        fetch(`api/v1/retrofunding/rounds/4/ballots/${address}/submit`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ signature, address, votes }),
+          body: JSON.stringify({ signature, address, ballot_content }),
         });
       }}
     >
