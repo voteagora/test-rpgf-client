@@ -12,6 +12,7 @@ export function Ballot() {
   };
 
   const r5_ballot_content = {
+    budget: 8_000_000,
     project_allocations: [
       {
         1: 100,
